@@ -39,33 +39,6 @@ coroutine.wrap(function()
     end
 end)()
 
-local function MakeDraggable(topbarobject, object)
-    local Dragging = nil
-    local DragInput = nil
-    local DragStart = nil
-    local StartPosition = nil
-
-    local function Update(input)
-        local Delta = input.Position - DragStart
-        local pos = UDim2.new(StartPosition.X.Scale, StartPosition.X.Offset + Delta.X, StartPosition.Y.Scale, StartPosition.Y.Offset + Delta.Y)
-        object.Position = pos
-    end
-
-    connectionManager:NewConnection(topbarobject.InputBegan, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            Dragging = true
-            DragStart = input.Position
-            StartPosition = object.Position
-
-            connectionManager:NewConnection(input.Changed,function() if input.UserInputState == Enum.UserInputState.End then Dragging = false end end)
-        end
-    end)
-
-    connectionManager:NewConnection(topbarobject.InputChanged, function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then DragInput = input end end)
-
-    connectionManager:NewConnection(UserInputService.InputChanged, function(input) if input == DragInput and Dragging then Update(input) end end)
-end
-
 function Flux:Window(ReplaceOld, text, bottom, mainclr)
     if ReplaceOld and getgenv._FluxLibGui and typeof(getgenv._FluxLibGui) == 'Instance' then
         connectionManager = ConnectionHandlerModule.new('_FluxHub')
@@ -74,6 +47,34 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
         connectionManager = ConnectionHandlerModule.new(tostring(math.random(1, 1000000)))
     end
     getgenv._FluxLibGui = FluxLib
+
+    local function MakeDraggable(topbarobject, object)
+        local Dragging = nil
+        local DragInput = nil
+        local DragStart = nil
+        local StartPosition = nil
+    
+        local function Update(input)
+            local Delta = input.Position - DragStart
+            local pos = UDim2.new(StartPosition.X.Scale, StartPosition.X.Offset + Delta.X, StartPosition.Y.Scale, StartPosition.Y.Offset + Delta.Y)
+            object.Position = pos
+        end
+    
+        connectionManager:NewConnection(topbarobject.InputBegan, function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                Dragging = true
+                DragStart = input.Position
+                StartPosition = object.Position
+    
+                connectionManager:NewConnection(input.Changed,function() if input.UserInputState == Enum.UserInputState.End then Dragging = false end end)
+            end
+        end)
+    
+        connectionManager:NewConnection(topbarobject.InputChanged, function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then DragInput = input end end)
+    
+        connectionManager:NewConnection(UserInputService.InputChanged, function(input) if input == DragInput and Dragging then Update(input) end end)
+    end
+
     getgenv.PresetColor = mainclr or Color3.fromRGB(66, 134, 255)
     local fs = false
     local MainFrame = Instance.new('Frame')
