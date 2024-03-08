@@ -10,6 +10,9 @@ local FluxLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Grayy
 -- Cleans up Fluxlib
 FluxLib:Remove(<nil>)
 
+--Toggle UI
+FluxLib:ToggleUI(<nil>)
+
 -- Window
 local Window = FluxLib:Window(Replace_Old_Gui<bool>, SaveFolder<string>, Title<string>, BottomText<string?>, MainColor<Color3?>)
 
