@@ -1,12 +1,11 @@
-local cloneref = cloneref or function (...)
-    return ...
-end
+local cloneref = cloneref or function(...) return ... end
 
-local function GetService(service)
-    return cloneref(game:GetService(service))
-end
+local function GetService(service) return cloneref(game:GetService(service)) end
 
-local ConnectionHandlerModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Grayy12/EXT/testing/connections.lua", true))()
+local SavingSystem = loadstring(game:HttpGet('https://raw.githubusercontent.com/Grayy12/SavingSys-Alpha/main/src.lua', true))()
+local SaveFile, SaveFileExists
+
+local ConnectionHandlerModule = loadstring(game:HttpGet('https://raw.githubusercontent.com/Grayy12/EXT/testing/connections.lua', true))()
 local connectionManager
 
 local Flux = { RainbowColorValue = 0, HueSelectionPosition = 0 }
@@ -26,7 +25,21 @@ FluxLib.Name = 'FluxLib'
 FluxLib.Parent = (gethui and gethui()) or GetService('CoreGui')
 FluxLib.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
+local function sanitizeFileName(fileName)
 
+    fileName = fileName:gsub('%W', '')
+   
+    fileName = fileName:gsub('^[%s%.]+', ''):gsub('[%s%.]+$', '')
+    return fileName
+end
+
+local function _saveState(id, type, value) SaveFile:Save({ [id] = { ['Type'] = type, ['Value'] = value } }) end
+
+local function _loadState(id, type)
+    local storeddata = SaveFile:Load()
+
+    return (storeddata[id] ~= nil and storeddata[id]['Type'] == type and storeddata[id]['Value']) or nil
+end
 
 coroutine.wrap(function()
     while wait() do
@@ -39,11 +52,10 @@ coroutine.wrap(function()
     end
 end)()
 
-function Flux:Window(ReplaceOld, text, bottom, mainclr)
+function Flux:Window(ReplaceOld, FolderName, text, bottom, mainclr)
+    SaveFile, SaveFileExists = SavingSystem.Init(sanitizeFileName(FolderName), sanitizeFileName(text))
     if ReplaceOld then
-        if getgenv._FluxLibGui and typeof(getgenv._FluxLibGui) == 'Instance' then
-            getgenv._FluxLibGui:Destroy()
-        end
+        if getgenv._FluxLibGui and typeof(getgenv._FluxLibGui) == 'Instance' then getgenv._FluxLibGui:Destroy() end
         connectionManager = ConnectionHandlerModule.new('_FluxHub')
     elseif not ReplaceOld then
         connectionManager = ConnectionHandlerModule.new(tostring(math.random(1, 1000000)))
@@ -56,28 +68,27 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
         local DragInput = nil
         local DragStart = nil
         local StartPosition = nil
-    
+
         local function Update(input)
             local Delta = input.Position - DragStart
             local pos = UDim2.new(StartPosition.X.Scale, StartPosition.X.Offset + Delta.X, StartPosition.Y.Scale, StartPosition.Y.Offset + Delta.Y)
             object.Position = pos
         end
-    
+
         connectionManager:NewConnection(topbarobject.InputBegan, function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                 Dragging = true
                 DragStart = input.Position
                 StartPosition = object.Position
-    
-                connectionManager:NewConnection(input.Changed,function() if input.UserInputState == Enum.UserInputState.End then Dragging = false end end)
+
+                connectionManager:NewConnection(input.Changed, function() if input.UserInputState == Enum.UserInputState.End then Dragging = false end end)
             end
         end)
-    
+
         connectionManager:NewConnection(topbarobject.InputChanged, function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then DragInput = input end end)
-    
+
         connectionManager:NewConnection(UserInputService.InputChanged, function(input) if input == DragInput and Dragging then Update(input) end end)
     end
-
     getgenv.PresetColor = mainclr or Color3.fromRGB(66, 134, 255)
     local fs = false
     local MainFrame = Instance.new('Frame')
@@ -145,7 +156,7 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
     BottomText.Position = UDim2.new(0.097560972, 0, 0.0889999792, 0)
     BottomText.Size = UDim2.new(0, 113, 0, 28)
     BottomText.Font = Enum.Font.Gotham
-    BottomText.Text = bottom
+    BottomText.Text = bottom or ''
     BottomText.TextColor3 = Color3.fromRGB(255, 255, 255)
     BottomText.TextSize = 14.000
     BottomText.TextTransparency = 0.300
@@ -289,11 +300,11 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
         NotificationDesc.TextWrapped = true
         NotificationDesc.TextTransparency = 1
 
-        connectionManager:NewConnection(CloseBtn.MouseEnter,function() TweenService:Create(CloseBtn, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
+        connectionManager:NewConnection(CloseBtn.MouseEnter, function() TweenService:Create(CloseBtn, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
 
-        connectionManager:NewConnection(CloseBtn.MouseLeave,function() TweenService:Create(CloseBtn, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
+        connectionManager:NewConnection(CloseBtn.MouseLeave, function() TweenService:Create(CloseBtn, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
 
-        connectionManager:NewConnection(CloseBtn.MouseButton1Click,function()
+        connectionManager:NewConnection(CloseBtn.MouseButton1Click, function()
 
             TweenService:Create(NotificationDesc, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 1 }):Play()
             TweenService:Create(CloseBtn, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 1 }):Play()
@@ -394,7 +405,7 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             Container.Visible = true
         end
 
-        connectionManager:NewConnection(Tab.MouseButton1Click,function()
+        connectionManager:NewConnection(Tab.MouseButton1Click, function()
             for i, v in next, ContainerFolder:GetChildren() do
                 if v.Name == 'Container' then v.Visible = false end
                 Container.Visible = true
@@ -513,13 +524,13 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             ArrowIco.Image = 'http://www.roblox.com/asset/?id=6034818372'
             ArrowIco.ImageTransparency = .3
 
-            connectionManager:NewConnection(Button.MouseEnter,function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
+            connectionManager:NewConnection(Button.MouseEnter, function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
 
-            connectionManager:NewConnection(Button.MouseLeave,function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
+            connectionManager:NewConnection(Button.MouseLeave, function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
 
-            connectionManager:NewConnection(Button.MouseButton1Click,function() pcall(callback) end)
+            connectionManager:NewConnection(Button.MouseButton1Click, function() pcall(callback) end)
 
-            connectionManager:NewConnection(ArrowBtn.MouseButton1Click,function()
+            connectionManager:NewConnection(ArrowBtn.MouseButton1Click, function()
                 if BtnDescToggled == false then
                     getgenv.changeButtonColor = function()
                         repeat wait() until BtnDescToggled == true
@@ -559,7 +570,8 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             end)
             Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
         end
-        function ContainerContent:Toggle(text, desc, default, callback)
+        function ContainerContent:Toggle(toggleId, text, desc, default, callback)
+            local ToggleFunc = {}
             local ToggleDescToggled = false
             local Toggled = false
             if desc == '' then desc = 'There is no description for this toggle.' end
@@ -686,12 +698,14 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             ArrowIco.Image = 'http://www.roblox.com/asset/?id=6034818372'
             ArrowIco.ImageTransparency = .3
 
-            connectionManager:NewConnection(Toggle.MouseEnter,function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
+            local function _toggle(bool)
+                if bool ~= nil then
+                    Toggled = bool
+                else
+                    Toggled = not Toggled
+                end
 
-            connectionManager:NewConnection(Toggle.MouseLeave,function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
-
-            connectionManager:NewConnection(Toggle.MouseButton1Click,function()
-                if Toggled == false then
+                if Toggled then
                     getgenv.changeToggleColor = function()
                         repeat wait() until Toggled == true
                         repeat
@@ -707,11 +721,17 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 else
                     ToggleCircle:TweenPosition(UDim2.new(0, 0, -0.273, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .3, true)
                 end
-                Toggled = not Toggled
-                pcall(callback, Toggled)
-            end)
 
-            connectionManager:NewConnection(ArrowBtn.MouseButton1Click,function()
+                pcall(callback, Toggled)
+            end
+
+            connectionManager:NewConnection(Toggle.MouseEnter, function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
+
+            connectionManager:NewConnection(Toggle.MouseLeave, function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
+
+            connectionManager:NewConnection(Toggle.MouseButton1Click, function() _toggle() end)
+
+            connectionManager:NewConnection(ArrowBtn.MouseButton1Click, function()
                 if ToggleDescToggled == false then
                     getgenv.changeArrowColor = function()
                         repeat wait() until ToggleDescToggled == true
@@ -749,16 +769,23 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 end
                 ToggleDescToggled = not ToggleDescToggled
             end)
-            if default == true then
-                ToggleCircle:TweenPosition(UDim2.new(0.37, 0, -0.273, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .3, true)
-                TweenService:Create(ToggleCircle, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundColor3 = getgenv.PresetColor }):Play()
-                Toggled = not Toggled
-                pcall(callback, Toggled)
-            end
+            -- if (default == true and not save) or (save and _loadState(toggleId, 'Toggle')) then
+            -- ToggleCircle:TweenPosition(UDim2.new(0.37, 0, -0.273, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .3, true)
+            -- TweenService:Create(ToggleCircle, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundColor3 = getgenv.PresetColor }):Play()
+            -- Toggled = not Toggled
+            -- pcall(callback, Toggled)
+            _toggle((_loadState(toggleId, 'Toggle') ~= nil and _loadState(toggleId, 'Toggle')) or (default == true and true) or false)
+            -- end
             Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
+
+            function ToggleFunc:Set(bool) _toggle(bool) end
+
+            function ToggleFunc:Save() _saveState(toggleId, 'Toggle', Toggled) end
+
+            return ToggleFunc
         end
 
-        function ContainerContent:Slider(text, desc, min, max, start, callback)
+        function ContainerContent:Slider(sliderId, text, desc, min, max, start, callback)
             local SliderFunc = {}
             local SliderDescToggled = false
             local dragging = false
@@ -901,7 +928,7 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             Value.TextTransparency = 0.300
             Value.TextXAlignment = Enum.TextXAlignment.Right
 
-            connectionManager:NewConnection(ArrowBtn.MouseButton1Click,function()
+            connectionManager:NewConnection(ArrowBtn.MouseButton1Click, function()
                 if SliderDescToggled == false then
                     getgenv.changeSliderColor = function()
                         repeat wait() until SliderDescToggled == true
@@ -950,9 +977,9 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 Value.Text = tostring(value)
                 pcall(callback, value)
             end
-            connectionManager:NewConnection(SlideCircle.InputBegan,function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
-            connectionManager:NewConnection(SlideCircle.InputEnded,function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
-            connectionManager:NewConnection(GetService('UserInputService').InputChanged,function(input) if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then move(input) end end)
+            connectionManager:NewConnection(SlideCircle.InputBegan, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
+            connectionManager:NewConnection(SlideCircle.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+            connectionManager:NewConnection(GetService('UserInputService').InputChanged, function(input) if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then move(input) end end)
             Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
             function SliderFunc:Change(tochange)
                 CurrentValueFrame.Size = UDim2.new((tochange or 0) / max, 0, 0, 3)
@@ -960,16 +987,14 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 Value.Text = tostring(tochange and math.floor((tochange / max) * (max - min) + min) or 0)
                 pcall(callback, tochange)
             end
+            if _loadState(sliderId, 'Slider') then SliderFunc:Change(_loadState(sliderId, 'Slider')) end
+            function SliderFunc:Save() _saveState(sliderId, 'Slider', tonumber(Value.Text)) end
             return SliderFunc
         end
-        function ContainerContent:Dropdown(text, list, callback)
+        function ContainerContent:Dropdown(dropdownId, text, list, callback)
             local filter = {}
 
-            for i, v in next, list do
-                if not table.find(filter, v) then
-                    table.insert(filter, v)
-                end
-            end
+            for i, v in next, list do if not table.find(filter, v) then table.insert(filter, v) end end
             list = filter
             local DropFunc = {}
             local Selected = text
@@ -1069,11 +1094,11 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             DropLayout.SortOrder = Enum.SortOrder.LayoutOrder
             DropLayout.Padding = UDim.new(0, 2)
 
-            connectionManager:NewConnection(Dropdown.MouseEnter,function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
+            connectionManager:NewConnection(Dropdown.MouseEnter, function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
 
-            connectionManager:NewConnection(Dropdown.MouseLeave,function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
+            connectionManager:NewConnection(Dropdown.MouseLeave, function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
 
-            connectionManager:NewConnection(Dropdown.MouseButton1Click,function()
+            connectionManager:NewConnection(Dropdown.MouseButton1Click, function()
                 if DropToggled == false then
                     getgenv.changeDropdownColor = function()
                         repeat wait() until DropToggled == true
@@ -1142,11 +1167,11 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 ItemCorner.Parent = Item
                 DropItemHolder.CanvasSize = UDim2.new(0, 0, 0, DropLayout.AbsoluteContentSize.Y)
 
-                connectionManager:NewConnection(Item.MouseEnter,function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
+                connectionManager:NewConnection(Item.MouseEnter, function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
 
-                connectionManager:NewConnection(Item.MouseLeave,function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
+                connectionManager:NewConnection(Item.MouseLeave, function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
 
-                connectionManager:NewConnection(Item.MouseButton1Click,function()
+                connectionManager:NewConnection(Item.MouseButton1Click, function()
                     Selected = v
                     Title.Text = Selected
                     pcall(callback, v)
@@ -1197,11 +1222,11 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 ItemCorner.Parent = Item
                 DropItemHolder.CanvasSize = UDim2.new(0, 0, 0, DropLayout.AbsoluteContentSize.Y)
 
-                connectionManager:NewConnection(Item.MouseEnter,function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
+                connectionManager:NewConnection(Item.MouseEnter, function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
 
-                connectionManager:NewConnection(Item.MouseLeave,function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
+                connectionManager:NewConnection(Item.MouseLeave, function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
 
-                connectionManager:NewConnection(Item.MouseButton1Click,function()
+                connectionManager:NewConnection(Item.MouseButton1Click, function()
                     Selected = addtext
                     Title.Text = Selected
                     pcall(callback, addtext)
@@ -1251,29 +1276,26 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 end
             end
             function DropFunc:Select(addtext)
-                assert(type(addtext) == "string", ('MultiDropdown:Select(<string>) parameter (%s) is not type: string'):format(typeof(addtext)))
-                
-                if not table.find(list, addtext) then
-                        return nil
-                end
-                
+                assert(type(addtext) == 'string', ('MultiDropdown:Select(<string>) parameter (%s) is not type: string'):format(typeof(addtext)))
+
+                if not table.find(list, addtext) then return nil end
+
                 Selected = addtext
                 Title.Text = Selected
                 pcall(callback, addtext)
-                SetTitle(Selected)
-                pcall(callback, Selected)
             end
+
+            if _loadState(dropdownId, 'Dropdown') then DropFunc:Select(_loadState(dropdownId, 'Dropdown')) end
+
+            function DropFunc:Save() _saveState(dropdownId, 'Dropdown', Selected) end
+
             return DropFunc
         end
 
-        function ContainerContent:MultiDropdown(text, list, callback)
+        function ContainerContent:MultiDropdown(dropdownId, text, list, callback)
             local filter = {}
 
-            for i, v in next, list do
-                if not table.find(filter, v) then
-                    table.insert(filter, v)
-                end
-            end
+            for i, v in next, list do if not table.find(filter, v) then table.insert(filter, v) end end
             list = filter
             local DropFunc = {}
             local Selected = {}
@@ -1290,7 +1312,7 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             local ArrowIco = Instance.new('ImageLabel')
             local DropItemHolder = Instance.new('ScrollingFrame')
             local DropLayout = Instance.new('UIListLayout')
-        
+
             Dropdown.Name = 'Dropdown'
             Dropdown.Parent = Container
             Dropdown.BackgroundColor3 = Color3.fromRGB(64, 68, 75)
@@ -1302,11 +1324,11 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             Dropdown.Text = ''
             Dropdown.TextColor3 = Color3.fromRGB(0, 0, 0)
             Dropdown.TextSize = 14.000
-        
+
             DropdownCorner.CornerRadius = UDim.new(0, 4)
             DropdownCorner.Name = 'DropdownCorner'
             DropdownCorner.Parent = Dropdown
-        
+
             Title.Name = 'Title'
             Title.Parent = Dropdown
             Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1319,7 +1341,7 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             Title.TextSize = 15.000
             Title.TextTransparency = 0.300
             Title.TextXAlignment = Enum.TextXAlignment.Left
-        
+
             Circle.Name = 'Circle'
             Circle.Parent = Title
             Circle.Active = true
@@ -1327,11 +1349,11 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             Circle.BackgroundColor3 = Color3.fromRGB(211, 211, 211)
             Circle.Position = UDim2.new(-0.150690272, 0, 0.503000021, 0)
             Circle.Size = UDim2.new(0, 11, 0, 11)
-        
+
             CircleCorner.CornerRadius = UDim.new(2, 6)
             CircleCorner.Name = 'CircleCorner'
             CircleCorner.Parent = Circle
-        
+
             CircleSmall.Name = 'CircleSmall'
             CircleSmall.Parent = Circle
             CircleSmall.Active = true
@@ -1340,11 +1362,11 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             CircleSmall.BackgroundTransparency = 1.000
             CircleSmall.Position = UDim2.new(0.485673368, 0, 0.503000021, 0)
             CircleSmall.Size = UDim2.new(0, 9, 0, 9)
-        
+
             CircleSmallCorner.CornerRadius = UDim.new(2, 6)
             CircleSmallCorner.Name = 'CircleSmallCorner'
             CircleSmallCorner.Parent = CircleSmall
-        
+
             ArrowIco.Name = 'ArrowIco'
             ArrowIco.Parent = Title
             ArrowIco.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -1355,7 +1377,7 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             ArrowIco.Size = UDim2.new(0, 28, 0, 24)
             ArrowIco.Image = 'http://www.roblox.com/asset/?id=6035047377'
             ArrowIco.ImageTransparency = .3
-        
+
             DropItemHolder.Name = 'DropItemHolder'
             DropItemHolder.Parent = Title
             DropItemHolder.Active = true
@@ -1367,25 +1389,25 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             DropItemHolder.CanvasSize = UDim2.new(0, 0, 0, 0)
             DropItemHolder.ScrollBarThickness = 5
             DropItemHolder.ScrollBarImageColor3 = Color3.fromRGB(41, 42, 48)
-        
+
             DropLayout.Name = 'DropLayout'
             DropLayout.Parent = DropItemHolder
             DropLayout.SortOrder = Enum.SortOrder.LayoutOrder
             DropLayout.Padding = UDim.new(0, 2)
-        
+
             local function SetTitle(tab)
                 local strTab = {}
-        
+
                 for _, v in next, tab do if type(v) == 'string' then table.insert(strTab, v) end end
-        
+
                 Title.Text = #strTab > 0 and table.concat(strTab, ', ') or text
             end
-        
-            connectionManager:NewConnection(Dropdown.MouseEnter,function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
-        
-            connectionManager:NewConnection(Dropdown.MouseLeave,function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
-        
-            connectionManager:NewConnection(Dropdown.MouseButton1Click,function()
+
+            connectionManager:NewConnection(Dropdown.MouseEnter, function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
+
+            connectionManager:NewConnection(Dropdown.MouseLeave, function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
+
+            connectionManager:NewConnection(Dropdown.MouseButton1Click, function()
                 if DropToggled == false then
                     getgenv.changeDropdownColor = function()
                         repeat wait() until DropToggled == true
@@ -1423,12 +1445,10 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 end
                 DropToggled = not DropToggled
             end)
-        
-            
-        
+
             for i, v in next, list do
                 ItemCount = ItemCount + 1
-        
+
                 if ItemCount == 1 then
                     FrameSize = 78
                 elseif ItemCount == 2 then
@@ -1438,7 +1458,7 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 end
                 local Item = Instance.new('TextButton')
                 local ItemCorner = Instance.new('UICorner')
-        
+
                 Item.Name = 'Item'
                 Item.Parent = DropItemHolder
                 Item.BackgroundColor3 = Color3.fromRGB(64, 68, 75)
@@ -1450,24 +1470,24 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 Item.TextColor3 = Color3.fromRGB(255, 255, 255)
                 Item.TextSize = 15.000
                 Item.TextTransparency = 0.300
-        
+
                 ItemCorner.CornerRadius = UDim.new(0, 4)
                 ItemCorner.Name = 'ItemCorner'
                 ItemCorner.Parent = Item
                 DropItemHolder.CanvasSize = UDim2.new(0, 0, 0, DropLayout.AbsoluteContentSize.Y)
-        
-                connectionManager:NewConnection(Item.MouseEnter,function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
-        
-                connectionManager:NewConnection(Item.MouseLeave,function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
-        
-                connectionManager:NewConnection(Item.MouseButton1Click,function()
+
+                connectionManager:NewConnection(Item.MouseEnter, function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
+
+                connectionManager:NewConnection(Item.MouseLeave, function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
+
+                connectionManager:NewConnection(Item.MouseButton1Click, function()
                     local intable = table.find(Selected, v)
                     if intable then
                         table.remove(Selected, intable)
                     else
                         table.insert(Selected, v)
                     end
-        
+
                     SetTitle(Selected)
                     pcall(callback, Selected)
                     DropToggled = not DropToggled
@@ -1481,21 +1501,17 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                     TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play()
                     wait(.4)
                     Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
-        
+
                 end)
             end
             function DropFunc:Add(addtable)
-                assert(type(addtable) == "table", 'MultiDropdown:Add() value wasnt a table')
+                assert(type(addtable) == 'table', 'MultiDropdown:Add() value wasnt a table')
                 for _i, _v in next, addtable do
-                    if table.find(list, _v) then
-                      continue  
-                    end
+                    if table.find(list, _v) then continue end
                     table.insert(list, _v)
-                    if type(_v) ~= "string" then
-                        continue
-                    end
+                    if type(_v) ~= "string" then continue end
                     ItemCount = ItemCount + 1
-        
+
                     if ItemCount == 1 then
                         FrameSize = 78
                     elseif ItemCount == 2 then
@@ -1505,7 +1521,7 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                     end
                     local Item = Instance.new('TextButton')
                     local ItemCorner = Instance.new('UICorner')
-        
+
                     Item.Name = 'Item'
                     Item.Parent = DropItemHolder
                     Item.BackgroundColor3 = Color3.fromRGB(64, 68, 75)
@@ -1517,17 +1533,17 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                     Item.TextColor3 = Color3.fromRGB(255, 255, 255)
                     Item.TextSize = 15.000
                     Item.TextTransparency = 0.300
-        
+
                     ItemCorner.CornerRadius = UDim.new(0, 4)
                     ItemCorner.Name = 'ItemCorner'
                     ItemCorner.Parent = Item
                     DropItemHolder.CanvasSize = UDim2.new(0, 0, 0, DropLayout.AbsoluteContentSize.Y)
-        
-                    connectionManager:NewConnection(Item.MouseEnter,function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
-        
-                    connectionManager:NewConnection(Item.MouseLeave,function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
-        
-                    connectionManager:NewConnection(Item.MouseButton1Click,function()
+
+                    connectionManager:NewConnection(Item.MouseEnter, function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
+
+                    connectionManager:NewConnection(Item.MouseLeave, function() TweenService:Create(Item, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
+
+                    connectionManager:NewConnection(Item.MouseButton1Click, function()
                         -- Selected = addtext
                         -- SetTitle(Selected)
                         -- pcall(callback, addtext)
@@ -1537,7 +1553,7 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                         else
                             table.insert(Selected, _v)
                         end
-        
+
                         SetTitle(Selected)
                         pcall(callback, Selected)
                         DropToggled = not DropToggled
@@ -1588,22 +1604,19 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 end
                 list = {}
             end
-        
+
             function DropFunc:Select(tab)
-                assert(type(tab) == "table", ('MultiDropdown:Select(<table>) parameter (%s) is not type: table'):format(typeof(tab)))
-                for i = #tab, 1, -1 do
-                    if not table.find(list, tab[i]) then
-                        table.remove(tab, i)
-                    end
-                end
+                assert(type(tab) == 'table', ('MultiDropdown:Select(<table>) parameter (%s) is not type: table'):format(typeof(tab)))
+                for i = #tab, 1, -1 do if not table.find(list, tab[i]) then table.remove(tab, i) end end
                 Selected = #tab > 0 and tab or Selected
                 SetTitle(Selected)
                 pcall(callback, Selected)
             end
-        
+            if _loadState(dropdownId, 'Dropdown') then DropFunc:Select(_loadState(dropdownId, 'Dropdown')) end
+
+            function DropFunc:Save() _saveState(dropdownId, 'Dropdown', Selected) end
             return DropFunc
         end
-        
 
         function ContainerContent:Colorpicker(text, preset, callback)
             local ColorPickerToggled = false
@@ -1833,11 +1846,11 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             ToggleBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
             ToggleBtn.TextSize = 14.000
 
-            connectionManager:NewConnection(ColorpickerBtn.MouseEnter,function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
+            connectionManager:NewConnection(ColorpickerBtn.MouseEnter, function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
 
-            connectionManager:NewConnection(ColorpickerBtn.MouseLeave,function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
+            connectionManager:NewConnection(ColorpickerBtn.MouseLeave, function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
 
-            connectionManager:NewConnection(ColorpickerBtn.MouseButton1Click,function()
+            connectionManager:NewConnection(ColorpickerBtn.MouseButton1Click, function()
                 if ColorPickerToggled == false then
                     getgenv.changePickerColor = function()
                         repeat wait() until ColorPickerToggled == true
@@ -1886,13 +1899,13 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             Color.BackgroundColor3 = preset
             pcall(callback, BoxColor.BackgroundColor3)
 
-            connectionManager:NewConnection(Color.InputBegan,function(input)
+            connectionManager:NewConnection(Color.InputBegan, function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     if RainbowColorPicker then return end
 
                     if ColorInput then ColorInput:Disconnect() end
 
-                    ColorInput = connectionManager:NewConnection(RunService.RenderStepped,function()
+                    ColorInput = connectionManager:NewConnection(RunService.RenderStepped, function()
                         local ColorX = (math.clamp(Mouse.X - Color.AbsolutePosition.X, 0, Color.AbsoluteSize.X) / Color.AbsoluteSize.X)
                         local ColorY = (math.clamp(Mouse.Y - Color.AbsolutePosition.Y, 0, Color.AbsoluteSize.Y) / Color.AbsoluteSize.Y)
 
@@ -1905,15 +1918,15 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 end
             end)
 
-            connectionManager:NewConnection(Color.InputEnded,function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then if ColorInput then ColorInput:Disconnect() end end end)
+            connectionManager:NewConnection(Color.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then if ColorInput then ColorInput:Disconnect() end end end)
 
-            connectionManager:NewConnection(Hue.InputBegan,function(input)
+            connectionManager:NewConnection(Hue.InputBegan, function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     if RainbowColorPicker then return end
 
                     if HueInput then HueInput:Disconnect() end
 
-                    HueInput = connectionManager:NewConnection(RunService.RenderStepped,function()
+                    HueInput = connectionManager:NewConnection(RunService.RenderStepped, function()
                         local HueY = (math.clamp(Mouse.Y - Hue.AbsolutePosition.Y, 0, Hue.AbsoluteSize.Y) / Hue.AbsoluteSize.Y)
 
                         HueSelection.Position = UDim2.new(0.48, 0, HueY, 0)
@@ -1924,9 +1937,9 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 end
             end)
 
-            connectionManager:NewConnection(Hue.InputEnded,function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then if HueInput then HueInput:Disconnect() end end end)
+            connectionManager:NewConnection(Hue.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then if HueInput then HueInput:Disconnect() end end end)
 
-            connectionManager:NewConnection(ToggleBtn.MouseButton1Down,function()
+            connectionManager:NewConnection(ToggleBtn.MouseButton1Down, function()
                 RainbowColorPicker = not RainbowColorPicker
 
                 if ColorInput then ColorInput:Disconnect() end
@@ -1973,7 +1986,7 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 end
             end)
 
-            connectionManager:NewConnection(Confirm.MouseButton1Click,function()
+            connectionManager:NewConnection(Confirm.MouseButton1Click, function()
                 ColorPickerToggled = not ColorPickerToggled
                 ColorSelection.Visible = false
                 HueSelection.Visible = false
@@ -2045,8 +2058,9 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
 
             Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
         end
-        function ContainerContent:Textbox(text, desc, disapper, callback)
+        function ContainerContent:Textbox(textboxId, text, desc, disapper, callback)
             if desc == '' then desc = 'There is no description for this textbox.' end
+            local TextboxFunc = {}
             local TextboxDescToggled = false
             local Textbox = Instance.new('TextButton')
             local TextboxCorner = Instance.new('UICorner')
@@ -2169,7 +2183,15 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             ArrowIco.Size = UDim2.new(0, 28, 0, 24)
             ArrowIco.Image = 'http://www.roblox.com/asset/?id=6034818372'
 
-            connectionManager:NewConnection(TextBox.FocusLost,function(ep)
+            if _loadState(textboxId, 'TextBox') then
+                TextBox.Text = _loadState(textboxId, 'TextBox')
+                if #TextBox.Text > 0 then
+                    pcall(callback, TextBox.Text)
+                    if disapper then TextBox.Text = '' end
+                end
+            end
+
+            connectionManager:NewConnection(TextBox.FocusLost, function(ep)
                 if ep then
                     if #TextBox.Text > 0 then
                         pcall(callback, TextBox.Text)
@@ -2178,7 +2200,7 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 end
             end)
 
-            connectionManager:NewConnection(ArrowBtn.MouseButton1Click,function()
+            connectionManager:NewConnection(ArrowBtn.MouseButton1Click, function()
                 if TextboxDescToggled == false then
                     getgenv.changeTextboxColor = function()
                         repeat wait() until TextboxDescToggled == true
@@ -2217,9 +2239,17 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 TextboxDescToggled = not TextboxDescToggled
             end)
             Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
+
+            function TextboxFunc:Save() _saveState(textboxId, 'TextBox', TextBox.Text) end
+
+            return TextboxFunc
         end
-        function ContainerContent:Bind(text, presetbind, callback)
+        function ContainerContent:Bind(bindId, text, presetbind, callback)
+            local BindFunc = {}
             local Key = presetbind.Name
+
+            if _loadState(bindId, 'Bind') then Key = _loadState(bindId, 'Bind') end
+
             local Bind = Instance.new('TextButton')
             local BindCorner = Instance.new('UICorner')
             local Title = Instance.new('TextLabel')
@@ -2296,11 +2326,11 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             BindLabel.TextTransparency = 0.300
             BindLabel.TextXAlignment = Enum.TextXAlignment.Right
 
-            connectionManager:NewConnection(Bind.MouseEnter,function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
+            connectionManager:NewConnection(Bind.MouseEnter, function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play() end)
 
-            connectionManager:NewConnection(Bind.MouseLeave,function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
+            connectionManager:NewConnection(Bind.MouseLeave, function() TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play() end)
 
-            connectionManager:NewConnection(Bind.MouseButton1Click,function()
+            connectionManager:NewConnection(Bind.MouseButton1Click, function()
                 hasInputBegan = false
                 getgenv.changeBindColor = function()
                     repeat
@@ -2308,7 +2338,7 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                         TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextColor3 = getgenv.PresetColor }):Play()
                         TweenService:Create(BindLabel, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextColor3 = getgenv.PresetColor }):Play()
                         TweenService:Create(Circle, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundColor3 = getgenv.PresetColor }):Play()
-                        connectionManager:NewConnection(GetService('UserInputService').InputBegan,function() hasInputBegan = true end)
+                        connectionManager:NewConnection(GetService('UserInputService').InputBegan, function() hasInputBegan = true end)
                     until hasInputBegan == true
                     TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextColor3 = Color3.fromRGB(255, 255, 255) }):Play()
                     TweenService:Create(BindLabel, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextColor3 = Color3.fromRGB(255, 255, 255) }):Play()
@@ -2335,7 +2365,7 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
                 isKeyLeft = true
             end)
 
-            connectionManager:NewConnection(GetService('UserInputService').InputBegan,function(current, pressed) if isKeyLeft == true then if not pressed then if current.KeyCode.Name == Key then pcall(callback) end end end end)
+            connectionManager:NewConnection(GetService('UserInputService').InputBegan, function(current, pressed) if isKeyLeft == true then if not pressed then if current.KeyCode.Name == Key then pcall(callback) end end end end)
 
             getgenv.changeColor = function()
                 for i, v in pairs(GetService('Players').LocalPlayer.PlayerGui.FluxLib:GetDescendants()) do
@@ -2350,6 +2380,10 @@ function Flux:Window(ReplaceOld, text, bottom, mainclr)
             end
 
             Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
+
+            function BindFunc:Save() _saveState(bindId, 'Bind', BindLabel.Text ~= '...' and BindLabel.Text or presetbind.Name) end
+
+            return BindFunc
         end
         return ContainerContent
     end
@@ -2366,10 +2400,11 @@ function Flux:Remove()
 
     for i, v in next, connectionManager:GetAllConnections() do
         if typeof(v) ~= 'RBXScriptConnection' and v.Connected == false then continue end
-        
+
         v:Disconnect()
         v = nil
     end
 end
 
 return Flux
+
