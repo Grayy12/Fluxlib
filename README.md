@@ -8,7 +8,7 @@ sortof
 local FluxLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Grayy12/Fluxhub/main/fluxlib.lua",true))()
 
 -- Cleans up Fluxlib
-FluxLib:Remove()
+FluxLib:Remove(<nil>)
 
 -- Window
 local Window = FluxLib:Window(Replace_Old_Gui<bool>, SaveFolder<string>, Title<string>, BottomText<string?>, MainColor<Color3?>)
