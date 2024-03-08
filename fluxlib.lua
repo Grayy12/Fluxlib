@@ -3,7 +3,7 @@ local cloneref = cloneref or function(...) return ... end
 local function GetService(service) return cloneref(game:GetService(service)) end
 
 local SavingSystem = loadstring(game:HttpGet('https://raw.githubusercontent.com/Grayy12/SavingSys-Alpha/main/src.lua', true))()
-local SaveFile, SaveFileExists
+local SaveFile
 
 local ConnectionHandlerModule = loadstring(game:HttpGet('https://raw.githubusercontent.com/Grayy12/EXT/testing/connections.lua', true))()
 local connectionManager
@@ -53,7 +53,7 @@ coroutine.wrap(function()
 end)()
 
 function Flux:Window(ReplaceOld, FolderName, text, bottom, mainclr)
-    SaveFile, SaveFileExists = SavingSystem.Init(sanitizeFileName(FolderName), sanitizeFileName(text))
+    SaveFile = SavingSystem.Init(sanitizeFileName(FolderName), sanitizeFileName(text))
     if ReplaceOld then
         if getgenv._FluxLibGui and typeof(getgenv._FluxLibGui) == 'Instance' then getgenv._FluxLibGui:Destroy() end
         connectionManager = ConnectionHandlerModule.new('_FluxHub')
@@ -189,7 +189,8 @@ function Flux:Window(ReplaceOld, FolderName, text, bottom, mainclr)
     MainFrame:TweenSize(UDim2.new(0, 706, 0, 484), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
 
     local uitoggled = false
-    getgenv.toggleUiHere = function()
+
+    function Flux:ToggleUI()
         if uitoggled == false then
             MainFrame:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
             uitoggled = true
