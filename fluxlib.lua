@@ -40,12 +40,15 @@ coroutine.wrap(function()
 end)()
 
 function Flux:Window(ReplaceOld, text, bottom, mainclr)
-    if ReplaceOld and getgenv._FluxLibGui and typeof(getgenv._FluxLibGui) == 'Instance' then
+    if ReplaceOld then
+        if getgenv._FluxLibGui and typeof(getgenv._FluxLibGui) == 'Instance' then
+            getgenv._FluxLibGui:Destroy()
+        end
         connectionManager = ConnectionHandlerModule.new('_FluxHub')
-        getgenv._FluxLibGui:Destroy()
     elseif not ReplaceOld then
         connectionManager = ConnectionHandlerModule.new(tostring(math.random(1, 1000000)))
     end
+
     getgenv._FluxLibGui = FluxLib
 
     local function MakeDraggable(topbarobject, object)
