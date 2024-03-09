@@ -33,32 +33,12 @@ local function sanitizeFileName(fileName)
     return fileName
 end
 
-
-local function _saveState(id, vtype, value, value2)
-    print(type(value))
-    local savedData = {
-        [id] = {
-            ['Type'] = vtype,
-            ['Value'] = value,
-        }
-    }
-
-    if value2 ~= nil then
-        savedData[id]['Value2'] = value2
-    end
-
-    SaveFile:Save(savedData)
-end
+local function _saveState(id, type, value) SaveFile:Save({ [id] = { ['Type'] = type, ['Value'] = value } }) end
 
 local function _loadState(id, type)
     local storeddata = SaveFile:Load()
 
-    if storeddata[id] ~= nil and storeddata[id]['Type'] == type then
-        if storeddata[id]['Value2'] ~= nil then
-            return {storeddata[id]['Value'], storeddata[id]['Value2']}
-        end
-        return storeddata[id]['Value'] or nil
-    end
+    return (storeddata[id] ~= nil and storeddata[id]['Type'] == type and storeddata[id]['Value']) or nil
 end
 
 coroutine.wrap(function()
@@ -72,28 +52,16 @@ coroutine.wrap(function()
     end
 end)()
 
-function Flux:Window(args)
-    local ReplaceOld = args['replaceOld'] or false
-    local EnableSaving = args['enableSaving'] or false
-    local text = args['Title']
-    local bottom = args['Description']
-    local mainclr = args['mainclr'] or Color3.fromRGB(66, 134, 255)
-    local FolderName = (args['SaveFolder'] and sanitizeFileName(args['SaveFolder'])) or ''
-    local FileName = (args['SaveFile'] and sanitizeFileName(args['SaveFile']))
-
-
-    if EnableSaving then
-        SaveFile = SavingSystem.Init(sanitizeFileName(FolderName), sanitizeFileName(FileName))
-    end
+function Flux:Window(ReplaceOld, FolderName, text, bottom, mainclr)
+    SaveFile = SavingSystem.Init(sanitizeFileName(FolderName), sanitizeFileName(text))
     if ReplaceOld then
         if getgenv._FluxLibGui and typeof(getgenv._FluxLibGui) == 'Instance' then getgenv._FluxLibGui:Destroy() end
-        getgenv._FluxLibGui = FluxLib
         connectionManager = ConnectionHandlerModule.new('_FluxHub')
     elseif not ReplaceOld then
         connectionManager = ConnectionHandlerModule.new(tostring(math.random(1, 1000000)))
     end
 
-    
+    getgenv._FluxLibGui = FluxLib
 
     local function MakeDraggable(topbarobject, object)
         local Dragging = nil
@@ -121,7 +89,7 @@ function Flux:Window(args)
 
         connectionManager:NewConnection(UserInputService.InputChanged, function(input) if input == DragInput and Dragging then Update(input) end end)
     end
-    getgenv.PresetColor = mainclr
+    getgenv.PresetColor = mainclr or Color3.fromRGB(66, 134, 255)
     local fs = false
     local MainFrame = Instance.new('Frame')
     local MainCorner = Instance.new('UICorner')
@@ -218,9 +186,23 @@ function Flux:Window(args)
 
     MakeDraggable(Drag, MainFrame)
     MakeDraggable(LeftFrame, MainFrame)
-    MainFrame:TweenSize(UDim2.new(0, 706, 0, 404), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
+    MainFrame:TweenSize(UDim2.new(0, 706, 0, 484), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
 
     local uitoggled = false
+
+    function Flux:ToggleUI()
+        if uitoggled == false then
+            MainFrame:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
+            uitoggled = true
+            repeat wait() until MainFrame.Size.Y.Offset <= 1
+            FluxLib.Enabled = false
+        else
+            MainFrame:TweenSize(UDim2.new(0, 706, 0, 484), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
+            repeat wait() until MainFrame.Size.Y.Offset > 1
+            FluxLib.Enabled = true
+            uitoggled = false
+        end
+    end
 
     function Flux:Notification(desc, buttontitle)
         for i, v in next, MainFrame:GetChildren() do if v.Name == 'NotificationBase' then v:Destroy() end end
@@ -238,7 +220,7 @@ function Flux:Window(args)
         NotificationBase.Parent = MainFrame
         NotificationBase.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
         NotificationBase.BackgroundTransparency = 1
-        NotificationBase.Size = UDim2.new(0, 706, 0, 404)
+        NotificationBase.Size = UDim2.new(0, 706, 0, 484)
         NotificationBase.AutoButtonColor = false
         NotificationBase.Font = Enum.Font.SourceSans
         NotificationBase.Text = ''
@@ -356,21 +338,6 @@ function Flux:Window(args)
         TweenService:Create(CloseBtn, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundTransparency = 0 }):Play()
     end
     local Tabs = {}
-
-    function Tabs:ToggleUI()
-        if uitoggled == false then
-            MainFrame:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
-            uitoggled = true
-            repeat wait() until MainFrame.Size.Y.Offset <= 1
-            FluxLib.Enabled = false
-        else
-            MainFrame:TweenSize(UDim2.new(0, 706, 0, 404), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
-            repeat wait() until MainFrame.Size.Y.Offset > 1
-            FluxLib.Enabled = true
-            uitoggled = false
-        end
-    end
-
     function Tabs:Tab(text, ico)
         local Tab = Instance.new('TextButton')
         local TabIcon = Instance.new('ImageLabel')
@@ -808,13 +775,13 @@ function Flux:Window(args)
             -- TweenService:Create(ToggleCircle, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundColor3 = getgenv.PresetColor }):Play()
             -- Toggled = not Toggled
             -- pcall(callback, Toggled)
-            _toggle((EnableSaving and _loadState(toggleId, 'Toggle') ~= nil and _loadState(toggleId, 'Toggle')) or (default == true and true) or false)
+            _toggle((_loadState(toggleId, 'Toggle') ~= nil and _loadState(toggleId, 'Toggle')) or (default == true and true) or false)
             -- end
             Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
 
             function ToggleFunc:Set(bool) _toggle(bool) end
 
-            function ToggleFunc:Save() if EnableSaving then _saveState(toggleId, 'Toggle', Toggled) else warn('Saving is not enabled!') end end
+            function ToggleFunc:Save() _saveState(toggleId, 'Toggle', Toggled) end
 
             return ToggleFunc
         end
@@ -1015,14 +982,14 @@ function Flux:Window(args)
             connectionManager:NewConnection(SlideCircle.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
             connectionManager:NewConnection(GetService('UserInputService').InputChanged, function(input) if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then move(input) end end)
             Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
-            function SliderFunc:Set(tochange)
+            function SliderFunc:Change(tochange)
                 CurrentValueFrame.Size = UDim2.new((tochange or 0) / max, 0, 0, 3)
                 SlideCircle.Position = UDim2.new((tochange or 0) / max, -6, -1.30499995, 0)
                 Value.Text = tostring(tochange and math.floor((tochange / max) * (max - min) + min) or 0)
                 pcall(callback, tochange)
             end
-            if EnableSaving and _loadState(sliderId, 'Slider') then SliderFunc:Set(_loadState(sliderId, 'Slider')) end
-            function SliderFunc:Save() if EnableSaving then _saveState(sliderId, 'Slider', tonumber(Value.Text)) else warn('Saving is not enabled!') end end
+            if _loadState(sliderId, 'Slider') then SliderFunc:Change(_loadState(sliderId, 'Slider')) end
+            function SliderFunc:Save() _saveState(sliderId, 'Slider', tonumber(Value.Text)) end
             return SliderFunc
         end
         function ContainerContent:Dropdown(dropdownId, text, list, callback)
@@ -1319,9 +1286,9 @@ function Flux:Window(args)
                 pcall(callback, addtext)
             end
 
-            if EnableSaving and _loadState(dropdownId, 'Dropdown') then DropFunc:Select(_loadState(dropdownId, 'Dropdown')) end
+            if _loadState(dropdownId, 'Dropdown') then DropFunc:Select(_loadState(dropdownId, 'Dropdown')) end
 
-            function DropFunc:Save() if EnableSaving then _saveState(dropdownId, 'Dropdown', Selected) else warn('Saving is not enbaled!') end end
+            function DropFunc:Save() _saveState(dropdownId, 'Dropdown', Selected) end
 
             return DropFunc
         end
@@ -1646,14 +1613,13 @@ function Flux:Window(args)
                 SetTitle(Selected)
                 pcall(callback, Selected)
             end
-            if EnableSaving and _loadState(dropdownId, 'Dropdown') then DropFunc:Select(_loadState(dropdownId, 'Dropdown')) end
+            if _loadState(dropdownId, 'Dropdown') then DropFunc:Select(_loadState(dropdownId, 'Dropdown')) end
 
-            function DropFunc:Save() if EnableSaving then _saveState(dropdownId, 'Dropdown', Selected) else warn('Saving is not enabled!') end end
+            function DropFunc:Save() _saveState(dropdownId, 'Dropdown', Selected) end
             return DropFunc
         end
 
-        function ContainerContent:Colorpicker(colorpickid, text, preset, callback)
-            local ColorFunc = {}
+        function ContainerContent:Colorpicker(text, preset, callback)
             local ColorPickerToggled = false
             local OldToggleColor = Color3.fromRGB(0, 0, 0)
             local OldColor = Color3.fromRGB(0, 0, 0)
@@ -1887,7 +1853,7 @@ function Flux:Window(args)
 
             connectionManager:NewConnection(ColorpickerBtn.MouseButton1Click, function()
                 if ColorPickerToggled == false then
-                    local function changePickerColor()
+                    getgenv.changePickerColor = function()
                         repeat wait() until ColorPickerToggled == true
                         repeat
                             wait()
@@ -1899,7 +1865,7 @@ function Flux:Window(args)
                         TweenService:Create(CircleSmall, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundTransparency = 1 }):Play()
                         TweenService:Create(Title, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0.3 }):Play()
                     end
-                    coroutine.wrap(changePickerColor)()
+                    coroutine.wrap(getgenv.changePickerColor)()
                     ColorSelection.Visible = true
                     HueSelection.Visible = true
                     Colorpicker:TweenSize(UDim2.new(0, 457, 0, 138), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
@@ -1938,7 +1904,7 @@ function Flux:Window(args)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     if RainbowColorPicker then return end
 
-                    if ColorInput then ColorInput:Disable() end
+                    if ColorInput then ColorInput:Disconnect() end
 
                     ColorInput = connectionManager:NewConnection(RunService.RenderStepped, function()
                         local ColorX = (math.clamp(Mouse.X - Color.AbsolutePosition.X, 0, Color.AbsoluteSize.X) / Color.AbsoluteSize.X)
@@ -1953,13 +1919,13 @@ function Flux:Window(args)
                 end
             end)
 
-            connectionManager:NewConnection(Color.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then if ColorInput then ColorInput:Disable() end end end)
+            connectionManager:NewConnection(Color.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then if ColorInput then ColorInput:Disconnect() end end end)
 
             connectionManager:NewConnection(Hue.InputBegan, function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     if RainbowColorPicker then return end
 
-                    if HueInput then HueInput:Disable() end
+                    if HueInput then HueInput:Disconnect() end
 
                     HueInput = connectionManager:NewConnection(RunService.RenderStepped, function()
                         local HueY = (math.clamp(Mouse.Y - Hue.AbsolutePosition.Y, 0, Hue.AbsoluteSize.Y) / Hue.AbsoluteSize.Y)
@@ -1972,24 +1938,24 @@ function Flux:Window(args)
                 end
             end)
 
-            connectionManager:NewConnection(Hue.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then if HueInput then HueInput:Disable() end end end)
+            connectionManager:NewConnection(Hue.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then if HueInput then HueInput:Disconnect() end end end)
 
-            local function rainbowfunc()
+            connectionManager:NewConnection(ToggleBtn.MouseButton1Down, function()
                 RainbowColorPicker = not RainbowColorPicker
 
-                if ColorInput then ColorInput:Disable() end
+                if ColorInput then ColorInput:Disconnect() end
 
-                if HueInput then HueInput:Disable() end
+                if HueInput then HueInput:Disconnect() end
 
                 if RainbowColorPicker then
-                     local function changeRainbowColor()
+                    getgenv.changeRainbowColor = function()
                         repeat
                             wait()
                             TweenService:Create(ToggleCircle, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundColor3 = getgenv.PresetColor }):Play()
                         until RainbowColorPicker == false
                         TweenService:Create(ToggleCircle, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundColor3 = Color3.fromRGB(255, 255, 255) }):Play()
                     end
-                    coroutine.wrap(changeRainbowColor)()
+                    coroutine.wrap(getgenv.changeRainbowColor)()
                     ToggleCircle:TweenPosition(UDim2.new(0.37, 0, -0.273, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .3, true)
                     TweenService:Create(ToggleCircle, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundColor3 = getgenv.PresetColor }):Play()
 
@@ -2019,9 +1985,7 @@ function Flux:Window(args)
 
                     pcall(callback, BoxColor.BackgroundColor3)
                 end
-            end
-
-            connectionManager:NewConnection(ToggleBtn.MouseButton1Down, rainbowfunc)
+            end)
 
             connectionManager:NewConnection(Confirm.MouseButton1Click, function()
                 ColorPickerToggled = not ColorPickerToggled
@@ -2035,36 +1999,6 @@ function Flux:Window(args)
                 wait(.4)
                 Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
             end)
-
-            function ColorFunc:Set(color)
-                local H, S, V = color:ToHSV()
-                ColorH, ColorS, ColorV = H, S, V
-                HueSelection.Position = UDim2.new(0.48, 0, 1 - ColorH, 0)
-                ColorSelection.Position = UDim2.new(ColorS, 0, 1 - ColorV, 0)
-                UpdateColorPicker()
-            end
-
-            function ColorFunc:Save()
-                if EnableSaving then
-                    local tc = BoxColor.BackgroundColor3
-                     _saveState(colorpickid, 'ColorPicker', {tc.R, tc.G, tc.B}, RainbowColorPicker)
-                else
-                    warn('Saving is not enabled!')
-                end
-            end
-
-            if EnableSaving then
-                local loadvalue =_loadState(colorpickid, 'ColorPicker')
-                if loadvalue then
-                    local h, s, v = unpack(loadvalue[1])
-                    ColorFunc:Set(Color3.fromRGB(h * 255, s * 255, v * 255))
-                    if loadvalue[2] == true then
-                        rainbowfunc()
-                    end
-                end
-            end
-            
-            return ColorFunc
         end
 
         function ContainerContent:Line()
@@ -2250,7 +2184,7 @@ function Flux:Window(args)
             ArrowIco.Size = UDim2.new(0, 28, 0, 24)
             ArrowIco.Image = 'http://www.roblox.com/asset/?id=6034818372'
 
-            if EnableSaving and _loadState(textboxId, 'TextBox') then
+            if _loadState(textboxId, 'TextBox') then
                 TextBox.Text = _loadState(textboxId, 'TextBox')
                 if #TextBox.Text > 0 then
                     pcall(callback, TextBox.Text)
@@ -2307,7 +2241,7 @@ function Flux:Window(args)
             end)
             Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
 
-            function TextboxFunc:Save() if EnableSaving then _saveState(textboxId, 'TextBox', TextBox.Text) else warn('Saving is not enabled!') end end
+            function TextboxFunc:Save() _saveState(textboxId, 'TextBox', TextBox.Text) end
 
             return TextboxFunc
         end
@@ -2315,7 +2249,7 @@ function Flux:Window(args)
             local BindFunc = {}
             local Key = presetbind.Name
 
-            if EnableSaving and _loadState(bindId, 'Bind') then Key = _loadState(bindId, 'Bind') end
+            if _loadState(bindId, 'Bind') then Key = _loadState(bindId, 'Bind') end
 
             local Bind = Instance.new('TextButton')
             local BindCorner = Instance.new('UICorner')
@@ -2434,39 +2368,44 @@ function Flux:Window(args)
 
             connectionManager:NewConnection(GetService('UserInputService').InputBegan, function(current, pressed) if isKeyLeft == true then if not pressed then if current.KeyCode.Name == Key then pcall(callback) end end end end)
 
+            getgenv.changeColor = function()
+                for i, v in pairs(GetService('Players').LocalPlayer.PlayerGui.FluxLib:GetDescendants()) do
+                    if v.Name == 'Tab' and v.Parent.Name == 'TabHold' then
+                        v.BackgroundColor3 = getgenv.PresetColor
+                    elseif v.Name == 'CurrentValueFrame' and v.Parent.Name == 'SlideFrame' then
+                        v.BackgroundColor3 = getgenv.PresetColor
+                    elseif v.Name == 'SlideCircle' and v.Parent.Name == 'SlideFrame' then
+                        v.ImageColor3 = getgenv.PresetColor
+                    end
+                end
+            end
 
             Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
 
-            function BindFunc:Save() if EnableSaving then _saveState(bindId, 'Bind', BindLabel.Text ~= '...' and BindLabel.Text or presetbind.Name) else warn('Saving is not enabled!') end end
+            function BindFunc:Save() _saveState(bindId, 'Bind', BindLabel.Text ~= '...' and BindLabel.Text or presetbind.Name) end
 
             return BindFunc
         end
         return ContainerContent
     end
-
-    function Tabs:Remove()
-        FluxLib:Destroy()
-        for i, v in next, connectionManager:GetAllConnections() do
-            if typeof(v) ~= 'RBXScriptConnection' and v.Connected == false then continue end
-    
-            v:Disable()
-            v = nil
-        end
-    end
-
-    function Tabs:ChangeColor(color)
-        for i, v in pairs(FluxLib:GetDescendants()) do
-            if v.Name == 'Tab' and v.Parent.Name == 'TabHold' then
-                v.BackgroundColor3 = color
-            elseif v.Name == 'CurrentValueFrame' and v.Parent.Name == 'SlideFrame' then
-                v.BackgroundColor3 = color
-            elseif v.Name == 'SlideCircle' and v.Parent.Name == 'SlideFrame' then
-                v.ImageColor3 = color
-            end
-        end
-    end
-
     return Tabs
 end
 
+function Flux:Remove()
+    if getgenv._FluxLibGui == FluxLib then
+        getgenv._FluxLibGui:Destroy()
+        getgenv._FluxLibGui = nil
+    else
+        FluxLib:Destroy()
+    end
+
+    for i, v in next, connectionManager:GetAllConnections() do
+        if typeof(v) ~= 'RBXScriptConnection' and v.Connected == false then continue end
+
+        v:Disconnect()
+        v = nil
+    end
+end
+
 return Flux
+
