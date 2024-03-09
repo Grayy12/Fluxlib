@@ -3,7 +3,7 @@ local cloneref = cloneref or function(...) return ... end
 local function GetService(service) return cloneref(game:GetService(service)) end
 
 local SavingSystem = loadstring(game:HttpGet('https://raw.githubusercontent.com/Grayy12/SavingSys-Alpha/main/src.lua', true))()
-local SaveFile
+local SaveFile, SaveFileExists
 
 local ConnectionHandlerModule = loadstring(game:HttpGet('https://raw.githubusercontent.com/Grayy12/EXT/testing/connections.lua', true))()
 local connectionManager
@@ -52,8 +52,8 @@ coroutine.wrap(function()
     end
 end)()
 
-function Flux:Window(ReplaceOld, FolderName, text, bottom, mainclr)
-    SaveFile = SavingSystem.Init(sanitizeFileName(FolderName), sanitizeFileName(text))
+function Flux:Window(ReplaceOld, FolderName, FileName, text, bottom, mainclr)
+    SaveFile = SavingSystem.Init(sanitizeFileName(FolderName), sanitizeFileName(FileName))
     if ReplaceOld then
         if getgenv._FluxLibGui and typeof(getgenv._FluxLibGui) == 'Instance' then getgenv._FluxLibGui:Destroy() end
         connectionManager = ConnectionHandlerModule.new('_FluxHub')
@@ -186,21 +186,26 @@ function Flux:Window(ReplaceOld, FolderName, text, bottom, mainclr)
 
     MakeDraggable(Drag, MainFrame)
     MakeDraggable(LeftFrame, MainFrame)
-    MainFrame:TweenSize(UDim2.new(0, 706, 0, 484), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
+    --0, 706, 0, 484
+    MainFrame:TweenSize(UDim2.new(0, 706, 0, 404), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
 
     local uitoggled = false
 
     function Flux:ToggleUI()
         if uitoggled == false then
-            MainFrame:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
-            uitoggled = true
-            repeat wait() until MainFrame.Size.Y.Offset <= 1
-            FluxLib.Enabled = false
+            task.spawn(function() 
+                MainFrame:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
+                uitoggled = true
+                repeat wait() until MainFrame.Size.Y.Offset <= 1
+                FluxLib.Enabled = false
+            end)
         else
-            MainFrame:TweenSize(UDim2.new(0, 706, 0, 484), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
-            repeat wait() until MainFrame.Size.Y.Offset > 1
-            FluxLib.Enabled = true
-            uitoggled = false
+            task.spawn(function() 
+                MainFrame:TweenSize(UDim2.new(0, 706, 0, 404), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
+                repeat wait() until MainFrame.Size.Y.Offset > 1
+                FluxLib.Enabled = true
+                uitoggled = false
+            end)
         end
     end
 
@@ -220,7 +225,7 @@ function Flux:Window(ReplaceOld, FolderName, text, bottom, mainclr)
         NotificationBase.Parent = MainFrame
         NotificationBase.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
         NotificationBase.BackgroundTransparency = 1
-        NotificationBase.Size = UDim2.new(0, 706, 0, 484)
+        NotificationBase.Size = UDim2.new(0, 706, 0, 404)
         NotificationBase.AutoButtonColor = false
         NotificationBase.Font = Enum.Font.SourceSans
         NotificationBase.Text = ''
@@ -978,9 +983,23 @@ function Flux:Window(ReplaceOld, FolderName, text, bottom, mainclr)
                 Value.Text = tostring(value)
                 pcall(callback, value)
             end
-            connectionManager:NewConnection(SlideCircle.InputBegan, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
-            connectionManager:NewConnection(SlideCircle.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
-            connectionManager:NewConnection(GetService('UserInputService').InputChanged, function(input) if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then move(input) end end)
+            connectionManager:NewConnection(SlideCircle.InputBegan, function(input)
+                if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = true
+                end
+            end)
+            
+            connectionManager:NewConnection(SlideCircle.InputEnded, function(input)
+                if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = false
+                end
+            end)
+            
+            connectionManager:NewConnection(UserInputService.InputChanged, function(input)
+                if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+                    move(input)
+                end
+            end)
             Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
             function SliderFunc:Change(tochange)
                 CurrentValueFrame.Size = UDim2.new((tochange or 0) / max, 0, 0, 3)
@@ -1904,7 +1923,7 @@ function Flux:Window(ReplaceOld, FolderName, text, bottom, mainclr)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     if RainbowColorPicker then return end
 
-                    if ColorInput then ColorInput:Disconnect() end
+                    if ColorInput then ColorInput:Disable() end
 
                     ColorInput = connectionManager:NewConnection(RunService.RenderStepped, function()
                         local ColorX = (math.clamp(Mouse.X - Color.AbsolutePosition.X, 0, Color.AbsoluteSize.X) / Color.AbsoluteSize.X)
@@ -1919,13 +1938,13 @@ function Flux:Window(ReplaceOld, FolderName, text, bottom, mainclr)
                 end
             end)
 
-            connectionManager:NewConnection(Color.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then if ColorInput then ColorInput:Disconnect() end end end)
+            connectionManager:NewConnection(Color.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then if ColorInput then ColorInput:Disable() end end end)
 
             connectionManager:NewConnection(Hue.InputBegan, function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     if RainbowColorPicker then return end
 
-                    if HueInput then HueInput:Disconnect() end
+                    if HueInput then HueInput:Disable() end
 
                     HueInput = connectionManager:NewConnection(RunService.RenderStepped, function()
                         local HueY = (math.clamp(Mouse.Y - Hue.AbsolutePosition.Y, 0, Hue.AbsoluteSize.Y) / Hue.AbsoluteSize.Y)
@@ -1938,14 +1957,14 @@ function Flux:Window(ReplaceOld, FolderName, text, bottom, mainclr)
                 end
             end)
 
-            connectionManager:NewConnection(Hue.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then if HueInput then HueInput:Disconnect() end end end)
+            connectionManager:NewConnection(Hue.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then if HueInput then HueInput:Disable() end end end)
 
             connectionManager:NewConnection(ToggleBtn.MouseButton1Down, function()
                 RainbowColorPicker = not RainbowColorPicker
 
-                if ColorInput then ColorInput:Disconnect() end
+                if ColorInput then ColorInput:Disable() end
 
-                if HueInput then HueInput:Disconnect() end
+                if HueInput then HueInput:Disable() end
 
                 if RainbowColorPicker then
                     getgenv.changeRainbowColor = function()
@@ -2402,10 +2421,9 @@ function Flux:Remove()
     for i, v in next, connectionManager:GetAllConnections() do
         if typeof(v) ~= 'RBXScriptConnection' and v.Connected == false then continue end
 
-        v:Disconnect()
+        v:Disable()
         v = nil
     end
 end
 
 return Flux
-
