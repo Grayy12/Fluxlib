@@ -218,7 +218,7 @@ function Flux:Window(args)
 
     MakeDraggable(Drag, MainFrame)
     MakeDraggable(LeftFrame, MainFrame)
-    MainFrame:TweenSize(UDim2.new(0, 706, 0, 404), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
+    MainFrame:TweenSize(UDim2.new(0, 706, 0, 484), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
 
     local uitoggled = false
 
@@ -238,7 +238,7 @@ function Flux:Window(args)
         NotificationBase.Parent = MainFrame
         NotificationBase.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
         NotificationBase.BackgroundTransparency = 1
-        NotificationBase.Size = UDim2.new(0, 706, 0, 404)
+        NotificationBase.Size = UDim2.new(0, 706, 0, 484)
         NotificationBase.AutoButtonColor = false
         NotificationBase.Font = Enum.Font.SourceSans
         NotificationBase.Text = ''
@@ -364,7 +364,7 @@ function Flux:Window(args)
             repeat wait() until MainFrame.Size.Y.Offset <= 1
             FluxLib.Enabled = false
         else
-            MainFrame:TweenSize(UDim2.new(0, 706, 0, 404), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
+            MainFrame:TweenSize(UDim2.new(0, 706, 0, 484), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
             repeat wait() until MainFrame.Size.Y.Offset > 1
             FluxLib.Enabled = true
             uitoggled = false
