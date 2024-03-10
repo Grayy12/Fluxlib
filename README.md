@@ -5,7 +5,7 @@ sortof
 
 ###  ID's MUST BE UNIQUE TO AN ITEM SO THEY DONT GET OVERRIDDEN BY OTHER ITEMS IN THE SAVE FILE
 ```lua
-local FluxLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Grayy12/Fluxlib/main/fluxlib.lua",true))()
+local FluxLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Grayy12/Fluxhub/main/fluxlib.lua",true))()
 
 -- Window
 local Window = FluxLib:Window(
@@ -95,5 +95,7 @@ Bind:Save()
 tab:Line()
 
 -- Label
-tab:Label(Title<string>)
+local Label = tab:Label(Title<string>)
+
+Label:Set(<string>)
 ```

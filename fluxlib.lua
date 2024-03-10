@@ -2091,6 +2091,7 @@ function Flux:Window(args)
             Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
         end
         function ContainerContent:Label(text)
+            local LabelFunc = {}
             local Label = Instance.new('TextButton')
             local LabelCorner = Instance.new('UICorner')
             local Title = Instance.new('TextLabel')
@@ -2125,6 +2126,12 @@ function Flux:Window(args)
             Title.TextXAlignment = Enum.TextXAlignment.Left
 
             Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
+
+            function LabelFunc:Set(msg)
+                Title.Text = msg
+            end
+
+            return LabelFunc
         end
         function ContainerContent:Textbox(textboxId, text, desc, disapper, callback)
             if desc == '' then desc = 'There is no description for this textbox.' end
