@@ -387,6 +387,7 @@ function Flux:Window(args)
         Tab.TextColor3 = Color3.fromRGB(0, 0, 0)
         Tab.TextSize = 14.000
         Tab.BackgroundTransparency = 1
+        Tab.Modal = true
 
         TabIcon.Name = 'TabIcon'
         TabIcon.Parent = Tab
