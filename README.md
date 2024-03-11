@@ -30,7 +30,7 @@ Window:Remove()
 Window:ChangeColor(color<Color3>)
 
 -- Notification
-Flux:Notification('Description', 'ButtonText')
+FluxLib:Notification('Description', 'ButtonText')
 
 -- Tab
 local tab = Window:Tab(Title<string>, icon<string?>)
