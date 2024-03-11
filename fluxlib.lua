@@ -17,6 +17,7 @@ local TweenService = GetService('TweenService')
 local RunService = GetService('RunService')
 local LocalPlayer = GetService('Players').LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
+local oldMouseCuror = UserInputService.MouseIconEnabled
 
 isKeyLeft = true
 
@@ -363,11 +364,13 @@ function Flux:Window(args)
             uitoggled = true
             repeat wait() until MainFrame.Size.Y.Offset <= 1
             FluxLib.Enabled = false
+            UserInputService.MouseIconEnabled = oldMouseCuror
         else
             MainFrame:TweenSize(UDim2.new(0, 706, 0, 484), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
             repeat wait() until MainFrame.Size.Y.Offset > 1
             FluxLib.Enabled = true
             uitoggled = false
+            UserInputService.MouseIconEnabled = true
         end
     end
 
@@ -388,6 +391,7 @@ function Flux:Window(args)
         Tab.TextSize = 14.000
         Tab.BackgroundTransparency = 1
         Tab.Modal = true
+        UserInputService.MouseIconEnabled = true
 
         TabIcon.Name = 'TabIcon'
         TabIcon.Parent = Tab
