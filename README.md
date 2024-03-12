@@ -54,7 +54,7 @@ Slider:Set(<number>)
 
 -- Dropdown
 -- List should look like this: {'hello', 'test'}
-local Dropdown = tab:Dropdown(Id<string>, Title<string>, Description<string>, List<table>, Callback<function> => string)
+local Dropdown = tab:Dropdown(Id<string>, Title<string>, List<table>, Callback<function> => string)
 
 -- add string to dropdown list
 Dropdown:Add(<string>)
@@ -65,7 +65,7 @@ Dropdown:Save()
 
 -- Multi-Select Dropdown
 -- List should look like this: {'hello', 'test'}
-local MultiDropdown = tab:MultiDropdown(Id<string>, Title<string>, Description<string>, List<table>, Callback<function> => table)
+local MultiDropdown = tab:MultiDropdown(Id<string>, Title<string>, List<table>, Callback<function> => table)
 
 -- add table to dropdown list
 Dropdown:Add(<table>)
