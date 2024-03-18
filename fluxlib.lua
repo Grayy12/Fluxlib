@@ -1313,9 +1313,10 @@ function Flux:Window(args)
                     wait(.4)
                     Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
                 end
+                list = {}
             end
             function DropFunc:Select(addtext)
-                assert(type(addtext) == 'string', ('MultiDropdown:Select(<string>) parameter (%s) is not type: string'):format(typeof(addtext)))
+                assert(type(addtext) == 'string', ('Dropdown:Select(<string>) parameter (%s) is not type: string'):format(typeof(addtext)))
 
                 if not table.find(list, addtext) then return nil end
 
