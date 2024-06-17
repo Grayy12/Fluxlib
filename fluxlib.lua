@@ -80,7 +80,7 @@ end)()
 
 function Flux:Window(args)
 	local ReplaceOld = args["replaceOld"] or false
-	local EnableSaving = args["enableSaving"] or false
+	local EnableSaving = (args["enableSaving"] and writefile ~= nil) or false
 	local text = args["Title"]
 	local bottom = args["Description"]
 	local mainclr = args["mainclr"] or Color3.fromRGB(66, 134, 255)
