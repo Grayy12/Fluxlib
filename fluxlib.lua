@@ -2543,6 +2543,12 @@ function Flux:Window(args)
 				end
 			end
 
+			function TextboxFunc:Set(val)
+				TextBox.Text = tostring(val)
+				pcall(callback, val)
+				return TextboxFunc
+			end
+
 			return TextboxFunc
 		end
 		function ContainerContent:Bind(bindId, text, presetbind, callback)
