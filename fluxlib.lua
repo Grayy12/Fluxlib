@@ -80,7 +80,7 @@ end)()
 
 function Flux:Window(args)
 	local ReplaceOld = args["replaceOld"] or false
-	local EnableSaving = (args["enableSaving"] and writefile ~= nil) or false
+	local EnableSaving = (args["enableSaving"] and writefile ~= nil and (identifyexecutor and not identifyexecutor():find("Solara"))) or false
 	local text = args["Title"]
 	local bottom = args["Description"]
 	local mainclr = args["mainclr"] or Color3.fromRGB(66, 134, 255)
@@ -880,6 +880,8 @@ function Flux:Window(args)
 				end
 			end
 
+			ToggleFunc.Name = text
+
 			return ToggleFunc
 		end
 
@@ -1131,6 +1133,9 @@ function Flux:Window(args)
 				increment = tonumber(val)
 				return SliderFunc
 			end
+
+			SliderFunc.Name = text
+
 			return SliderFunc
 		end
 		function ContainerContent:Dropdown(dropdownId, text, list, callback)
@@ -1419,7 +1424,7 @@ function Flux:Window(args)
 			end
 			function DropFunc:Clear()
 				Title.Text = text
-				FrameSize = 0
+				FrameSize = 43
 				ItemCount = 0
 				for i, v in next, DropItemHolder:GetChildren() do
 					if v.Name == "Item" then
@@ -1441,8 +1446,8 @@ function Flux:Window(args)
 				end
 				list = {}
 			end
-			function DropFunc:Select(addtext)
-				assert(type(addtext) == "string", ("Dropdown:Select(<string>) parameter (%s) is not type: string"):format(typeof(addtext)))
+			function DropFunc:Set(addtext)
+				assert(type(addtext) == "string", ("Dropdown:Set(<string>) parameter (%s) is not type: string"):format(typeof(addtext)))
 
 				if not table.find(list, addtext) then
 					return nil
@@ -1454,7 +1459,7 @@ function Flux:Window(args)
 			end
 
 			if EnableSaving and _loadState(dropdownId, "Dropdown") then
-				DropFunc:Select(_loadState(dropdownId, "Dropdown"))
+				DropFunc:Set(_loadState(dropdownId, "Dropdown"))
 			end
 
 			function DropFunc:Save()
@@ -1465,6 +1470,7 @@ function Flux:Window(args)
 				end
 			end
 
+			DropFunc.Name = text
 			return DropFunc
 		end
 
@@ -1787,7 +1793,7 @@ function Flux:Window(args)
 			function DropFunc:Clear()
 				Selected = {}
 				Title.Text = text
-				FrameSize = 0
+				FrameSize = 43
 				ItemCount = 0
 				for i, v in next, DropItemHolder:GetChildren() do
 					if v.Name == "Item" then
@@ -1810,7 +1816,7 @@ function Flux:Window(args)
 				list = {}
 			end
 
-			function DropFunc:Select(tab)
+			function DropFunc:Set(tab)
 				assert(type(tab) == "table", ("MultiDropdown:Select(<table>) parameter (%s) is not type: table"):format(typeof(tab)))
 				for i = #tab, 1, -1 do
 					if not table.find(list, tab[i]) then
@@ -1822,7 +1828,7 @@ function Flux:Window(args)
 				pcall(callback, Selected)
 			end
 			if EnableSaving and _loadState(dropdownId, "Dropdown") then
-				DropFunc:Select(_loadState(dropdownId, "Dropdown"))
+				DropFunc:Set(_loadState(dropdownId, "Dropdown"))
 			end
 
 			function DropFunc:Save()
@@ -1832,6 +1838,9 @@ function Flux:Window(args)
 					warn("Saving is not enabled!")
 				end
 			end
+
+			DropFunc.Name = text
+
 			return DropFunc
 		end
 
@@ -2277,6 +2286,8 @@ function Flux:Window(args)
 				end
 			end
 
+			ColorFunc.Name = text
+
 			return ColorFunc
 		end
 
@@ -2342,6 +2353,8 @@ function Flux:Window(args)
 			function LabelFunc:Set(msg)
 				Title.Text = msg
 			end
+
+			LabelFunc.Name = text
 
 			return LabelFunc
 		end
@@ -2549,6 +2562,8 @@ function Flux:Window(args)
 				return TextboxFunc
 			end
 
+			TextboxFunc.Name = text
+
 			return TextboxFunc
 		end
 		function ContainerContent:Bind(bindId, text, presetbind, callback)
@@ -2699,6 +2714,8 @@ function Flux:Window(args)
 					warn("Saving is not enabled!")
 				end
 			end
+
+			BindFunc.Name = text
 
 			return BindFunc
 		end
