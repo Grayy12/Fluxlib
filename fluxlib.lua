@@ -647,6 +647,13 @@ function Flux:Window(args)
 				BtnDescToggled = not BtnDescToggled
 			end)
 			Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
+			local ButtonFunc = {}
+
+			function ButtonFunc:Press()
+				pcall(callback)
+			end
+
+			return ButtonFunc
 		end
 		function ContainerContent:Toggle(toggleId, text, desc, default, callback)
 			local ToggleFunc = {}
