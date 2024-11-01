@@ -881,6 +881,8 @@ function Flux:Window(args)
 
 			function ToggleFunc:Toggle()
 				_toggle()
+
+				return Toggled
 			end
 
 			function ToggleFunc:Save()
