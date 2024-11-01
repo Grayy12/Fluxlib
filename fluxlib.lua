@@ -872,6 +872,10 @@ function Flux:Window(args)
 				_toggle(bool)
 			end
 
+			function ToggleFunc:Toggle()
+				_toggle()
+			end
+
 			function ToggleFunc:Save()
 				if EnableSaving then
 					_saveState(toggleId, "Toggle", Toggled)
